@@ -4,8 +4,6 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 from statsmodels.stats.power import TTestPower
 
-NUM_BINS = 20
-
 st.set_page_config(page_title="P-Value Simulation", page_icon="📊", layout="wide")
 st.title("📊 P-Value Simulation for One-Sample t-Test")
 
@@ -13,10 +11,12 @@ st.title("📊 P-Value Simulation for One-Sample t-Test")
 with st.sidebar:
     st.header("Simulation Settings 🎛️")
     n_sims = st.slider('Number of Simulations', 10000, 100000, 50000, step=10000)
+    alpha = st.slider(':alpha:', 0, 1, 0.05, step=0.01)
     mean_sample = st.slider('Mean Sample (IQ)', 80, 120, 106)
     sample_size = st.slider('Sample Size', 10, 100, 26)
     std_dev = st.slider('Standard Deviation', 5, 30, 15)
 
+num_bins = 1/alpha
 np.random.seed(42)
 
 # Simulate all experiments at once
@@ -43,7 +43,7 @@ st.write(f"Effect size: **{effect_size:.4f}**")
 # Plot
 # Plot
 fig, ax = plt.subplots(figsize=(6, 4))  # Good internal resolution
-ax.hist(p_values, bins=NUM_BINS, color='grey', edgecolor='black')
+ax.hist(p_values, bins=num_bins, color='grey', edgecolor='black')
 ax.set_xlabel("P-values")
 ax.set_ylabel("Number of p-values")
 ax.set_title(f"P-value Distribution with {formal_power * 100:.1f}% Power")
@@ -51,7 +51,7 @@ ax.set_xlim(0, 1)
 ax.set_ylim(0, n_sims)
 ax.set_xticks(np.arange(0, 1.1, 0.1))
 ax.set_yticks(np.linspace(0, n_sims, 5))
-ax.axhline(y=n_sims / NUM_BINS, color='red', linestyle='dotted')
+ax.axhline(y=n_sims / num_bins, color='red', linestyle='dotted')
 plt.tight_layout()
 
 # Use columns to control plot width
