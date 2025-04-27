@@ -16,7 +16,7 @@ with st.sidebar:
     sample_size = st.slider('Sample Size', 10, 100, 26)
     std_dev = st.slider('Standard Deviation', 1, 30, 15)
 
-num_bins = 1/alpha
+num_bins = int(1 / alpha)
 np.random.seed(42)
 
 # Simulate all experiments at once
