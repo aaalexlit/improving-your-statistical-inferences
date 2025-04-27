@@ -41,7 +41,7 @@ st.write(f"Formal Power: **{formal_power:.4f}**")
 st.write(f"Effect size: **{effect_size:.4f}**")
 
 # Plot
-fig, ax = plt.subplots(figsize=(8, 6))
+fig, ax = plt.subplots(figsize=(6, 4))  # Smaller figure size
 ax.hist(p_values, bins=NUM_BINS, color='grey', edgecolor='black')
 ax.set_xlabel("P-values")
 ax.set_ylabel("Number of p-values")
