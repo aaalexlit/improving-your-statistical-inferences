@@ -6,25 +6,28 @@ from statsmodels.stats.power import TTestPower
 
 NUM_BINS = 20
 
-st.title("P-Value Simulation for One-Sample t-Test")
+st.set_page_config(page_title="P-Value Simulation", page_icon="📊", layout="wide")
+st.title("📊 P-Value Simulation for One-Sample t-Test")
 
 # Sidebar parameters
-st.sidebar.header("Simulation Settings")
-n_sims = st.sidebar.slider('Number of Simulations', 10000, 100000, 50000, step=10000)
-mean_sample = st.sidebar.slider('Mean Sample (IQ)', 80, 120, 106)
-sample_size = st.sidebar.slider('Sample Size', 10, 100, 26)
-std_dev = st.sidebar.slider('Standard Deviation', 5, 30, 15)
+with st.sidebar:
+    st.header("Simulation Settings 🎛️")
+    n_sims = st.slider('Number of Simulations', 10000, 100000, 50000, step=10000)
+    mean_sample = st.slider('Mean Sample (IQ)', 80, 120, 106)
+    sample_size = st.slider('Sample Size', 10, 100, 26)
+    std_dev = st.slider('Standard Deviation', 5, 30, 15)
 
 np.random.seed(42)
 
-# Simulate experiments
-p_values = np.array([
-    stats.ttest_1samp(
-        np.random.normal(loc=mean_sample, scale=std_dev, size=sample_size),
-        popmean=100
-    ).pvalue
-    for _ in range(n_sims)
-])
+# Simulate all experiments at once
+samples = np.random.normal(loc=mean_sample, scale=std_dev, size=(n_sims, sample_size))
+
+# Perform t-tests manually
+sample_means = samples.mean(axis=1)
+sample_stds = samples.std(axis=1, ddof=1)
+standard_errors = sample_stds / np.sqrt(sample_size)
+t_statistics = (sample_means - 100) / standard_errors
+p_values = 2 * (1 - stats.t.cdf(np.abs(t_statistics), df=sample_size - 1))
 
 # Calculate power
 empirical_power = np.mean(p_values < 0.05)
@@ -48,4 +51,5 @@ ax.set_ylim(0, n_sims)
 ax.set_xticks(np.arange(0, 1.1, 0.1))
 ax.set_yticks(np.linspace(0, n_sims, 5))
 ax.axhline(y=n_sims / NUM_BINS, color='red', linestyle='dotted')
+plt.tight_layout()
 st.pyplot(fig)
