@@ -11,10 +11,10 @@ st.title("📊 P-Value Simulation for One-Sample t-Test")
 with st.sidebar:
     st.header("Simulation Settings 🎛️")
     n_sims = st.slider('Number of Simulations', 10000, 100000, 50000, step=10000)
-    alpha = st.slider(':alpha:', 0, 1, 0.05, step=0.01)
+    alpha = st.slider('⍺', 0.0, 1.1, 0.05, step=0.01)
     mean_sample = st.slider('Mean Sample (IQ)', 80, 120, 106)
     sample_size = st.slider('Sample Size', 10, 100, 26)
-    std_dev = st.slider('Standard Deviation', 5, 30, 15)
+    std_dev = st.slider('Standard Deviation', 1, 30, 15)
 
 num_bins = 1/alpha
 np.random.seed(42)
