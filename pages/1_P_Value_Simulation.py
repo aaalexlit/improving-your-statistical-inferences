@@ -11,7 +11,7 @@ st.title("📊 P-Value Simulation for One-Sample t-Test")
 with st.sidebar:
     st.header("Simulation Settings 🎛️")
     n_sims = st.slider('Number of Simulations', 10000, 100000, 50000, step=10000)
-    alpha = st.slider('⍺', 0.0, 1.1, 0.05, step=0.01)
+    alpha = st.slider('⍺', 0.0, 0.5, 0.05, step=0.01)
     mean_sample = st.slider('Mean Sample (IQ)', 80, 120, 106)
     sample_size = st.slider('Sample Size', 10, 100, 26)
     std_dev = st.slider('Standard Deviation', 1, 30, 15)
@@ -30,9 +30,9 @@ t_statistics = (sample_means - 100) / standard_errors
 p_values = 2 * (1 - stats.t.cdf(np.abs(t_statistics), df=sample_size - 1))
 
 # Calculate power
-empirical_power = np.mean(p_values < 0.05)
+empirical_power = np.mean(p_values < alpha)
 effect_size = (mean_sample - 100) / std_dev
-formal_power = TTestPower().power(effect_size=effect_size, nobs=sample_size, alpha=0.05, alternative='two-sided')
+formal_power = TTestPower().power(effect_size=effect_size, nobs=sample_size, alpha=alpha, alternative='two-sided')
 
 # Results
 st.subheader("Results")
