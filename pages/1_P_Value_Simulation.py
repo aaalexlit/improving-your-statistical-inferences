@@ -41,7 +41,8 @@ st.write(f"Formal Power: **{formal_power:.4f}**")
 st.write(f"Effect size: **{effect_size:.4f}**")
 
 # Plot
-fig, ax = plt.subplots(figsize=(6, 4))  # Smaller figure size
+# Plot
+fig, ax = plt.subplots(figsize=(6, 4))  # Good internal resolution
 ax.hist(p_values, bins=NUM_BINS, color='grey', edgecolor='black')
 ax.set_xlabel("P-values")
 ax.set_ylabel("Number of p-values")
@@ -52,4 +53,9 @@ ax.set_xticks(np.arange(0, 1.1, 0.1))
 ax.set_yticks(np.linspace(0, n_sims, 5))
 ax.axhline(y=n_sims / NUM_BINS, color='red', linestyle='dotted')
 plt.tight_layout()
-st.pyplot(fig)
+
+# Use columns to control plot width
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col2:
+    st.pyplot(fig)
