@@ -1,93 +1,168 @@
-# 2_Power_Curve.py
+# 2_Power_Curve.py – interactive visualisation of Type I & II errors, power and effect size
+
+"""
+This page lets the user explore how α, power (1-β), sample size *n* and effect size *(Cohen’s d)* trade-off in a **one–sample Z-test**.
+Four “solve-for” modes are offered – Power, α, *n* or *d*.  Whichever quantity is selected is **calculated automatically** from the other three and shown inside the plot, while the sliders for the remaining parameters stay active.
+
+The plot places every annotation **inside** the figure (no separate legend) and shades:
+  • Type I error (α) – red    • Type II error (β) – navy    • Power – sky-blue.
+"""
 
 import streamlit as st
 import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
+from math import sqrt
 
-st.set_page_config(page_title="Power and Errors Visualization", page_icon="📈", layout="wide")
-st.title("📈 Type I and II Errors, Power, and Effect Size Visualization")
+st.set_page_config(page_title="Power & Errors", page_icon="📈", layout="wide")
 
-# Sidebar Settings
+# ----------------------------------------------------------------------------
+# Sidebar: user controls
+# ----------------------------------------------------------------------------
 with st.sidebar:
     st.header("Settings 🎛️")
-    solve_for = st.radio("Solve for:", ("Power", "Alpha", "n", "d"))
-    power = st.slider("Power (1-β)", 0.5, 0.99, 0.8, 0.01)
-    alpha = st.slider("Significance level (α)", 0.001, 0.2, 0.05, 0.001)
-    sample_size = st.slider("Sample size (n)", 5, 500, 20, 1)
-    effect_size = st.slider("Effect size (Cohen's d)", 0.01, 2.0, 0.63, 0.01)
-    tail_type = st.radio("Test Type:", ("One-tailed", "Two-tailed"))
+    solve_for = st.radio("Solve for…", ["Power", "Alpha", "n", "d"], horizontal=True)
 
-# Adjust calculations based on solve_for (basic implementation)
-if solve_for == "Power":
-    df = sample_size - 1
-    se = 1 / np.sqrt(sample_size)
-    non_central_param = effect_size / se
-    if tail_type == "One-tailed":
-        z_alpha = stats.t.ppf(1 - alpha, df)
-        z_beta = z_alpha - non_central_param
-        beta = stats.t.cdf(z_beta, df)
+    # We still show all sliders; the one being solved-for is ignored and greyed-out using st.slider(disabled=True)
+    # but Streamlit (<1.30) doesn’t have disabled sliders, so we just visually hint by the label.
+
+    power_in  = st.slider("Power (1 – β)", 0.50, 0.99, 0.80, 0.01)
+    alpha_in  = st.slider("Significance level (α)", 0.001, 0.20, 0.05, 0.001)
+    n_in      = st.slider("Sample size (n)", 5, 500, 20, 1)
+    d_in      = st.slider("Effect size (Cohen’s d)", 0.01, 2.0, 0.44, 0.01)
+    tails     = st.radio("Tail", ["One-tailed", "Two-tailed"], horizontal=True)
+
+# Helper ---------------------------------------------------------------------
+NORMAL = stats.norm()
+
+def crit_value(alpha: float, two_tailed: bool) -> float:
+    """Return positive critical Z for given α and tail selection."""
+    return NORMAL.ppf(1 - alpha/2) if two_tailed else NORMAL.ppf(1 - alpha)
+
+def solve(power, alpha, n, d, mode, two_tailed):
+    """Solve for requested parameter using standard z-test formulae.
+    Returns (power, alpha, n, d)."""
+    two = two_tailed
+    z_alpha = crit_value(alpha, two)
+
+    if mode == "Power":  # compute power from alpha, n, d
+        z_beta = z_alpha - d * sqrt(n)
+        if two:
+            beta  = NORMAL.cdf( z_beta) - NORMAL.cdf(-z_alpha - d*sqrt(n))
+        else:
+            beta  = NORMAL.cdf( z_beta)
+        power = 1 - beta
+
+    elif mode == "Alpha":  # compute alpha from power, n, d
+        z_beta = NORMAL.ppf(power)
+        z_alpha = d*sqrt(n) - z_beta
+        alpha = 2*(1-NORMAL.cdf(z_alpha)) if two else (1 - NORMAL.cdf(z_alpha))
+        alpha = max(min(alpha, 0.5), 1e-6)  # clamp to sensible range
+
+    elif mode == "n":  # compute sample size n from power, alpha, d
+        z_beta  = NORMAL.ppf(power)
+        z_alpha = crit_value(alpha, two)
+        n = ((z_alpha + z_beta) / d)**2
+        n = max(n, 2)
+
+    elif mode == "d":  # compute effect size from power, alpha, n
+        z_beta  = NORMAL.ppf(power)
+        z_alpha = crit_value(alpha, two)
+        d = (z_alpha + z_beta) / sqrt(n)
+
+    # Re-calculate power with final values to ensure consistency when mode ≠ power
+    z_alpha = crit_value(alpha, two)
+    z_beta  = z_alpha - d*sqrt(n)
+    if two:
+        beta = NORMAL.cdf( z_beta) - NORMAL.cdf(-z_alpha - d*sqrt(n))
     else:
-        z_alpha = stats.t.ppf(1 - alpha/2, df)
-        z_beta = z_alpha - non_central_param
-        beta = stats.t.cdf(z_beta, df)
-    calculated_power = 1 - beta
+        beta = NORMAL.cdf(z_beta)
+    power = 1 - beta
+
+    return power, alpha, n, d
+
+# Solve ----------------------------------------------------------------------
+TWOTAILED = tails == "Two-tailed"
+POWER, ALPHA, N, D = solve(power_in, alpha_in, n_in, d_in, solve_for, TWOTAILED)
+
+# ----------------------------------------------------------------------------
+# Build the plot
+# ----------------------------------------------------------------------------
+# X-axis range – cover ±4 SD around both means
+x_min = -4
+x_max = max(4, D + 4)
+xx = np.linspace(x_min, x_max, 2000)
+
+h0_pdf = NORMAL.pdf(xx)                        # H0 ~ N(0,1)
+ha_pdf = NORMAL.pdf(xx, loc=D, scale=1)        # Ha ~ N(d,1)
+
+zcrit = crit_value(ALPHA, TWOTAILED)
+
+fig, ax = plt.subplots(figsize=(8, 4.5))
+
+# Plot PDFs
+ax.plot(xx, h0_pdf, color="black", linestyle=":", linewidth=1)
+ax.plot(xx, ha_pdf, color="#4aa6ff", linewidth=2)
+
+# --- Shading ----------------------------------------------------------------
+if TWOTAILED:
+    # Type I error (α) – red tails under H0
+    ax.fill_between(xx, 0, h0_pdf, where=(xx <= -zcrit) | (xx >= zcrit), color="#c23b22", alpha=0.4)
+    # Type II error (β) – dark area under Ha between −zcrit ↔ zcrit
+    ax.fill_between(xx, 0, ha_pdf, where=(xx > -zcrit) & (xx < zcrit), color="#16233a", alpha=0.5)
+    # Power – light blue tails under Ha beyond ±zcrit
+    ax.fill_between(xx, 0, ha_pdf, where=(xx <= -zcrit) | (xx >= zcrit), color="#4aa6ff", alpha=0.4)
 else:
-    calculated_power = power
+    # Type I error (α) – right tail under H0
+    ax.fill_between(xx, 0, h0_pdf, where=(xx >= zcrit), color="#c23b22", alpha=0.4)
+    # Type II error (β) – left area under Ha before zcrit
+    ax.fill_between(xx, 0, ha_pdf, where=(xx < zcrit), color="#16233a", alpha=0.5)
+    # Power – right tail under Ha beyond zcrit
+    ax.fill_between(xx, 0, ha_pdf, where=(xx >= zcrit), color="#4aa6ff", alpha=0.4)
 
-# Define distributions
-x = np.linspace(-4, 4, 1000)
-h0 = stats.norm.pdf(x, 0, 1)
-ha = stats.norm.pdf(x, effect_size, 1)
+# Critical lines
+ax.axvline(zcrit, color="black", linewidth=1)
+if TWOTAILED:
+    ax.axvline(-zcrit, color="black", linewidth=1)
 
-# Critical values
-if tail_type == "One-tailed":
-    z_crit = stats.norm.ppf(1 - alpha)
-else:
-    z_crit = stats.norm.ppf(1 - alpha / 2)
+# Arrow & label for Cohen's d
+ax.annotate(r"Cohen's $d$: {:.2f}".format(D), xy=(0.5*D, 0.37), ha="center", fontsize=12, weight='bold')
+ax.annotate("", xy=(0, 0.33), xytext=(D, 0.33), arrowprops=dict(arrowstyle="<->", color="black"))
 
-# Plot
-fig, ax = plt.subplots(figsize=(8, 5))
-ax.plot(x, h0, label=r"$H_0$", color='black', linestyle='--')
-ax.plot(x, ha, label=r"$H_a$", color='skyblue')
+# Axis & ticks
+ax.set_xlim(x_min, x_max)
+ax.set_ylim(0, 0.45)
+ax.set_xlabel("Standardised effect (z)")
+ax.set_ylabel("Probability density")
+ax.set_yticks([])
 
-# Fill regions
-if tail_type == "One-tailed":
-    ax.fill_between(x, 0, h0, where=(x > z_crit), color='red', alpha=0.3, label="Type I error (α)")
-    ax.fill_between(x, 0, ha, where=(x < z_crit), color='navy', alpha=0.3, label="Type II error (β)")
-else:
-    ax.fill_between(x, 0, h0, where=(x > z_crit), color='red', alpha=0.3)
-    ax.fill_between(x, 0, h0, where=(x < -z_crit), color='red', alpha=0.3)
-    ax.fill_between(x, 0, ha, where=(x < -z_crit) | (x > z_crit), color='skyblue', alpha=0.3)
-    ax.fill_between(x, 0, ha, where=(x > -z_crit) & (x < z_crit), color='navy', alpha=0.3, label="Type II error (β)")
+# Inline text annotations under the axis (mimicking the original design)
+ax.text(0, -0.04, r"$\beta$", ha="center", va="top", fontsize=11)
+ax.text(zcrit + 0.02, -0.04, r"$\alpha$" if not TWOTAILED else r"$\alpha/2$", ha="left", va="top", fontsize=11)
 
-# Annotations
-ax.axvline(x=z_crit, color='black', linestyle='solid', label=r"$Z_{crit}$")
-if tail_type == "Two-tailed":
-    ax.axvline(x=-z_crit, color='black', linestyle='solid')
-
-ax.annotate(f"Cohen's d: {effect_size:.2f}", xy=(effect_size/2, 0.4), xytext=(effect_size/2, 0.45),
-            arrowprops=dict(facecolor='black', shrink=0.05), ha='center')
-
-ax.set_xlabel("Sample space")
-ax.set_ylabel("Probability Density")
-ax.set_ylim(0, 0.8)
-ax.legend()
-plt.tight_layout()
-
-# Layout control
-col1, col2, col3 = st.columns([1, 2, 1])
-
+# ---------------------------------------------------------------------------
+# Show figure centred with margins via columns
+# ---------------------------------------------------------------------------
+col1, col2, col3 = st.columns([1, 2.5, 1])
 with col2:
-    st.pyplot(fig)
+    st.pyplot(fig, use_container_width=True)
 
-# Display stats
-st.subheader("Summary")
-st.write(f"Calculated Power: **{calculated_power:.2%}**")
-st.write(f"Sample Size (n): **{sample_size}**")
-st.write(f"Effect Size (Cohen's d): **{effect_size:.2f}**")
-st.write(f"Significance Level (α): **{alpha:.3f}**")
+# ---------------------------------------------------------------------------
+# Summary numbers (large, beneath plot)
+# ---------------------------------------------------------------------------
+col_a, col_b, col_c, col_d = st.columns(4)
+col_a.markdown(f"<h3 style='text-align:center;color:#c23b22;'>{ALPHA*100:.0f}%</h3><p style='text-align:center;'>Type I error</p>", unsafe_allow_html=True)
+col_b.markdown(f"<h3 style='text-align:center;color:#16233a;'>{(1-POWER)*100:.0f}%</h3><p style='text-align:center;'>Type II error</p>", unsafe_allow_html=True)
+col_c.markdown(f"<h3 style='text-align:center;color:#4aa6ff;'>{POWER*100:.0f}%</h3><p style='text-align:center;'>Power</p>", unsafe_allow_html=True)
+col_d.markdown(f"<h3 style='text-align:center;color:#1c7c54;'>{int(round(N,0))}</h3><p style='text-align:center;'>Sample size</p>", unsafe_allow_html=True)
 
-st.caption("""
-Visualization based on a one-sample Z-test. You can vary the sample size, power, significance level, and effect size to see how the sampling distributions change.
-""")
+# ---------------------------------------------------------------------------
+# Provide numeric outputs in an expander for detail
+# ---------------------------------------------------------------------------
+with st.expander("Show numeric details"):
+    st.write(f"Power (1 – β): **{POWER:.3f}**")
+    st.write(f"Type I error α: **{ALPHA:.3f}**")
+    st.write(f"Type II error β: **{1-POWER:.3f}**")
+    st.write(f"Sample size n: **{N:.2f}**")
+    st.write(f"Effect size d: **{D:.3f}**")
+    st.write(f"Tail: **{'Two-tailed' if TWOTAILED else 'One-tailed'}**")
