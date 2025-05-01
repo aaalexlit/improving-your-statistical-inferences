@@ -25,7 +25,7 @@ st.title("📈 Binomial Likelihood-Ratio Plot")
 
 with st.sidebar:
     st.header("Data")
-    n = st.slider("Total trials n", 1, 100, 13, 1)
+    n = st.slider("Total trials n", 1, 1000, 13, 1)
     x = st.slider("Successes x", 0, n, 8, 1)
 
     st.header("Point hypotheses")
