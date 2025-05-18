@@ -31,9 +31,10 @@ intuition about hypothesis testing, power, and likelihoods.
 
 # Quick links (Streamlit ≥ 1.29)
 st.page_link("pages/1_P_Value_Simulation.py", label="📊  P‑Value Simulation", icon="📊")
-st.page_link("pages/2_Power_Curve.py",        label="⚡  Power & Errors",      icon="⚡")
-st.page_link("pages/3_Likelihood_Curve.py",   label="📈  Likelihood Curve",    icon="📈")
-st.page_link("pages/4_Likelihood_Ratio.py",   label="🔀  Likelihood Ratio",    icon="🔀")
+st.page_link("pages/2_Power_Curve.py", label="⚡  Power & Errors", icon="⚡")
+st.page_link("pages/3_Likelihood_Curve.py", label="📈  Likelihood Curve", icon="📈")
+st.page_link("pages/4_Likelihood_Ratio.py", label="🔀  Likelihood Ratio", icon="🔀")
+st.page_link("pages/5_Bayes_Factor.py", label="📈 Binomial Bayes‑Factor Calculator", icon="📈")
 
 st.divider()
 
