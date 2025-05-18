@@ -57,13 +57,13 @@ BF10 = stats.beta.pdf(θ0, α_post, β_post) / stats.beta.pdf(θ0, α_prior, β_
 # Plot
 # ──────────────────────────────────────────────────────────────────────────────
 fig, ax = plt.subplots(figsize=(7, 4))
-ax.plot(θ, posterior_dens, lw=3, label="Posterior", color="#1f77b4")
+ax.plot(θ, posterior_dens, lw=3, label="Posterior", color="black")
 ax.plot(θ, prior_dens, lw=3, label="Prior", color="grey")
 ax.plot(θ, likelihood_dens, lw=3, label="Likelihood", color="dodgerblue", linestyle="--")
 
 # vertical line for θ0 and dots
 ax.axvline(θ0, color="black", lw=1, ls=":")
-ax.plot([θ0], [stats.beta.pdf(θ0, α_post, β_post)], "o", color="#1f77b4")
+ax.plot([θ0], [stats.beta.pdf(θ0, α_post, β_post)], "o", color="black")
 ax.plot([θ0], [stats.beta.pdf(θ0, α_prior, β_prior)], "o", color="grey")
 ax.vlines(θ0,
           stats.beta.pdf(θ0, α_prior, β_prior),
