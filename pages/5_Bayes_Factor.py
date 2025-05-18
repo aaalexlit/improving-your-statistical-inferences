@@ -31,7 +31,7 @@ with st.sidebar:
     β_prior = st.number_input("β (beta)", min_value=0.01, max_value=10.0, value=1.0, step=0.1)
 
     st.header("Point null θ₀")
-    H0 = st.number_input("θ₀", 0.0, 1.0, 0.50, 0.005, format="%0.001f")
+    H0 = st.number_input("θ₀", 0.0, 1.0, 0.50, 0.005, format="%0.3f")
 
 # guard for boundaries in Beta density
 eps = 1e-9
