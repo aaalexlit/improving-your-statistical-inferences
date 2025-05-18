@@ -27,8 +27,8 @@ with st.sidebar:
     x = st.slider("Successes x", min_value=0, max_value=n, value=10, step=1)
 
     st.header("Prior Beta(α, β)")
-    α_prior = st.number_input("α (alpha)", min_value=0.01, max_value=10.0, value=1.0, step=0.1)
-    β_prior = st.number_input("β (beta)", min_value=0.01, max_value=10.0, value=1.0, step=0.1)
+    α_prior = st.number_input("α (alpha)", min_value=0.01, max_value=100.0, value=1.0, step=0.1)
+    β_prior = st.number_input("β (beta)", min_value=0.01, max_value=100.0, value=1.0, step=0.1)
 
     st.header("Point null θ₀")
     H0 = st.number_input("θ₀", 0.0, 1.0, 0.50, 0.005, format="%0.3f")
