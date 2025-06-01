@@ -21,7 +21,7 @@ st.title("📈 P-Value Over Time")
 # ─────────────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.header("Simulation Settings")
-    n = st.slider("Total number of datapoints (per condition)", 20, 500, 200, 10)
+    n = st.slider("Total number of datapoints (per condition)", 20, 2000, 200, 10)
     D = st.slider("True effect size (Cohen's d)", -1.0, 1.0, 0.0, 0.1)
     SD = st.slider("Standard deviation", 0.1, 2.0, 1.0, 0.1)
 
