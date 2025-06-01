@@ -24,10 +24,13 @@ with st.sidebar:
     n = st.slider("Total number of datapoints (per condition)", 20, 500, 200, 10)
     D = st.slider("True effect size (Cohen's d)", -1.0, 1.0, 0.0, 0.1)
     SD = st.slider("Standard deviation", 0.1, 2.0, 1.0, 0.1)
-    
+
+    # Add a button to re-run the simulation
+    rerun_button = st.button("🔄 Re-run Simulation", help="Generate new random data with the current parameters")
+
     st.markdown("""
     This simulation shows how p-values fluctuate as sample size increases.
-    
+
     The simulation:
     1. Starts with 10 participants per group
     2. Adds participants one by one
@@ -38,6 +41,12 @@ with st.sidebar:
 # ─────────────────────────────────────────────────────────────────────────────
 # Simulation
 # ─────────────────────────────────────────────────────────────────────────────
+# Set a random seed that changes when the button is clicked
+if 'last_run' not in st.session_state or rerun_button:
+    st.session_state.last_run = np.random.randint(0, 1000000)
+
+np.random.seed(st.session_state.last_run)
+
 # Initialize arrays
 total_n = n + 10  # Start after initial 10 participants
 p_values = np.zeros(total_n)
@@ -53,7 +62,7 @@ for i in range(10):
 for i in range(10, total_n):
     x_values[i] = np.random.normal(0, SD)
     y_values[i] = np.random.normal(D, SD)
-    
+
     # Perform t-test with current data
     t_test = stats.ttest_ind(x_values[:i+1], y_values[:i+1], equal_var=True)
     p_values[i] = t_test.pvalue
