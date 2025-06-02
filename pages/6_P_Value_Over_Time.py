@@ -50,22 +50,41 @@ np.random.seed(st.session_state.last_run)
 # Initialize arrays
 total_n = n + 10  # Start after initial 10 participants
 p_values = np.zeros(total_n)
-x_values = np.zeros(total_n)
-y_values = np.zeros(total_n)
 
-# Generate random data for first 10 participants
-for i in range(10):
-    x_values[i] = np.random.normal(0, SD)
-    y_values[i] = np.random.normal(D, SD)
+# Generate all random data at once using vector operations
+x_values = np.random.normal(0, SD, total_n)
+y_values = np.random.normal(D, SD, total_n)
 
-# Simulate adding participants one by one
-for i in range(10, total_n):
-    x_values[i] = np.random.normal(0, SD)
-    y_values[i] = np.random.normal(D, SD)
+# Perform t-tests for each sample size from 10 to total_n using vectorized operations
+# Calculate cumulative means and variances
+n_range = np.arange(10, total_n)  # Sample sizes from 10 to total_n-1
+n1 = n_range + 1  # Add 1 because we're including indices 0 to n_range
+n2 = n_range + 1  # Add 1 because we're including indices 0 to n_range
 
-    # Perform t-test with current data
-    t_test = stats.ttest_ind(x_values[:i+1], y_values[:i+1], equal_var=True)
-    p_values[i] = t_test.pvalue
+# Calculate cumulative sums and sums of squares for x_values
+x_cumsum = np.cumsum(x_values)
+x_cumsum_sq = np.cumsum(x_values**2)
+x_means = x_cumsum[n_range] / n1  # Use n_range as indices
+
+# Calculate cumulative sums and sums of squares for y_values
+y_cumsum = np.cumsum(y_values)
+y_cumsum_sq = np.cumsum(y_values**2)
+y_means = y_cumsum[n_range] / n2  # Use n_range as indices
+
+# Calculate variances
+x_var = (x_cumsum_sq[n_range] - (x_cumsum[n_range]**2) / n1) / (n1 - 1)
+y_var = (y_cumsum_sq[n_range] - (y_cumsum[n_range]**2) / n2) / (n2 - 1)
+
+# Calculate pooled standard deviation
+df = n1 + n2 - 2
+pooled_var = ((n1 - 1) * x_var + (n2 - 1) * y_var) / df
+std_err = np.sqrt(pooled_var * (1/n1 + 1/n2))
+
+# Calculate t-statistic
+t_stat = (x_means - y_means) / std_err
+
+# Calculate p-values
+p_values[n_range] = 2 * (1 - stats.t.cdf(np.abs(t_stat), df))
 
 # Remove first 10 empty p-values
 p_values = p_values[10:total_n]
