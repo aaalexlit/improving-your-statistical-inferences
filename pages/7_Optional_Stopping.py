@@ -32,7 +32,7 @@ with st.sidebar:
     Looks = st.slider("Number of looks at the data", 2, 10, 5, 1)
     nSim = st.slider("Number of simulated studies", 1000, 100000, 50000, 1000)
     alpha = st.slider("Alpha level", 0.01, 0.10, 0.05, 0.01)
-    D = st.slider("True effect size (Cohen's d)", -1.0, 1.0, 0.0, 0.1)
+    D = 0.0
 
     # Add a button to re-run the simulation
     rerun_button = st.button("🔄 Re-run Simulation", help="Generate new random data with the current parameters")
