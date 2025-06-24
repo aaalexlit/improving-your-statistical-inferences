@@ -31,7 +31,7 @@ with st.sidebar:
     N = st.slider("Total number of datapoints (per condition)", 20, 500, 100, 10)
     Looks = st.slider("Number of looks at the data", 2, 200, 5, 1)
     nSim = st.slider("Number of simulated studies", 1000, 100000, 50000, 1000)
-    alpha = st.slider("Alpha level", 0.01, 0.10, 0.05, 0.01)
+    alpha = st.number_input("Alpha level", min_value=0.01, max_value=0.50, value=0.05, step=0.001)
     D = 0.0
 
     # Add a button to re-run the simulation
