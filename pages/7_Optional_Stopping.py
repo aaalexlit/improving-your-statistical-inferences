@@ -191,7 +191,7 @@ with col2:
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
 # Plot 1: Histogram of p-values with optional stopping
-breaks = 50
+breaks = 100
 ax1.hist(p, bins=breaks, color="grey", edgecolor="black", alpha=0.7)
 ax1.axhline(y=nSim/breaks, color="red", linestyle="--", label="Uniform distribution")
 ax1.set_xlabel("p-value")
